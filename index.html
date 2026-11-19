@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swimming Classes - Editable Sheet</title>
+<style>
+  :root { --gold:#ffe39a; --line:#111; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:18px; background:#ededed; color:#111; font-family:Arial, Helvetica, sans-serif; }
+  .toolbar { max-width:1100px; margin:0 auto 14px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  button { border:0; border-radius:7px; padding:11px 18px; font-size:15px; font-weight:700; cursor:pointer; background:#171717; color:#fff; }
+  button.secondary { background:#b78b2e; }
+  .sheet { width:210mm; min-height:297mm; margin:0 auto; padding:8mm 7mm; background:#fff; box-shadow:0 2px 12px #aaa; }
+  .topline { display:flex; justify-content:space-between; align-items:center; margin:0 1mm 2mm; gap:8mm; font-weight:bold; font-size:13px; }
+  .topline label { display:flex; align-items:center; gap:6px; flex:1; }
+  .topline select { border:0; border-bottom:1px solid #111; border-radius:0; min-width:70px; width:72%; font:inherit; outline:none; padding:2px 4px; background:#fff; }
+  .days-wrap { display:flex; flex-wrap:wrap; gap:7px 13px; align-items:center; margin:0 1mm 4mm; font-size:12px; }
+  .search-panel { max-width:1100px; margin:0 auto 14px; padding:12px; background:#fff; border:1px solid #ccc; border-radius:9px; }
+  .search-panel h3 { margin:0 0 10px; font-size:16px; }
+  .search-controls { display:flex; align-items:center; flex-wrap:wrap; gap:10px 16px; }
+  .search-days { display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-size:13px; }
+  .search-time { display:flex; align-items:center; gap:6px; font-size:13px; }
+  .search-time select { padding:7px; border:1px solid #aaa; border-radius:5px; background:white; }
+  .search-results { margin-top:10px; display:grid; gap:6px; }
+  .result-item { display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid #ddd; padding:8px; border-radius:6px; font-size:13px; }
+  .result-item button { padding:6px 10px; font-size:12px; }
+  .page-status { text-align:center; font-size:12px; margin:0 0 5px; color:#555; }
+  .days-wrap strong { margin-inline-end:4px; }
+  .days-wrap label { display:flex; align-items:center; gap:3px; white-space:nowrap; }
+  .coach-tools { display:flex; justify-content:center; margin:-1mm 0 2mm; }
+  .coach-tools button { font-size:10px; padding:4px 8px; background:#b78b2e; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; column-gap:2mm; row-gap:2.4mm; }
+  .group { border:1.5px solid var(--line); padding:1px; break-inside:avoid; min-width:0; }
+  .coachline { height:7mm; display:flex; align-items:center; justify-content:center; gap:5px; font-weight:bold; font-size:12px; }
+  .coachline input { width:72%; border:0; border-bottom:1px solid #222; outline:none; text-align:center; font-weight:bold; font-size:12px; padding:1px; }
+  table { border-collapse:collapse; width:100%; table-layout:fixed; }
+  th, td { border:1px solid #111; text-align:center; padding:0; height:6.75mm; }
+  th { background:var(--gold); font-size:11px; font-weight:bold; height:7.5mm; }
+  td { font-size:11px; }
+  th:nth-child(1),td:nth-child(1){width:6%}
+  th:nth-child(2),td:nth-child(2){width:14%}
+  th:nth-child(3),td:nth-child(3){width:27%}
+  th:nth-child(4),td:nth-child(4){width:10%}
+  th:nth-child(5),td:nth-child(5){width:12%}
+  th:nth-child(6),td:nth-child(6){width:13%}
+  th:nth-child(7),td:nth-child(7){width:18%}
+  td input { width:100%; height:100%; min-width:0; border:0; outline:none; text-align:center; padding:1px 2px; font:inherit; background:transparent; color:#111; }
+  td.name input { text-align:left; padding-left:4px; }
+  .num { font-weight:bold; }
+  input:focus { background:#fff6d9; }
+  @page { size:A4 portrait; margin:0; }
+  @media print {
+    body { padding:0; background:#fff; }
+    .toolbar, .search-panel { display:none !important; }
+    .sheet { width:210mm; height:297mm; min-height:0; margin:0; padding:8mm 7mm; box-shadow:none; }
+    .group { break-inside:avoid; }
+    input { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+    .topline input, .coachline input { background:transparent !important; }
+  }
+  @media screen and (max-width:760px) {
+    body { padding:8px; }
+    .sheet { width:100%; min-height:0; padding:12px 8px; overflow-x:auto; }
+    .grid { min-width:620px; }
+    .topline { min-width:620px; }
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button onclick="window.print()">طباعة النموذج</button>
+  <button class="secondary" onclick="saveNow()">حفظ الصفحة وإنشاء صفحة جديدة</button>
+  <button onclick="exportBackup()">تصدير نسخة احتياطية خارج المتصفح</button>
+  <button onclick="document.getElementById('backupFile').click()">استيراد نسخة احتياطية</button>
+  <input id="backupFile" type="file" accept=".json,application/json" style="display:none" onchange="importBackup(event)">
+  <button onclick="clearData()">تفريغ الصفحة الحالية</button>
+</div>
+<section class="search-panel">
+  <h3>البحث عن صفحة محفوظة</h3>
+  <div class="search-controls">
+    <div class="search-days">
+      <strong>الأيام:</strong>
+      <label><input type="checkbox" value="Sat"> Sat</label>
+      <label><input type="checkbox" value="Sun"> Sun</label>
+      <label><input type="checkbox" value="Mon"> Mon</label>
+      <label><input type="checkbox" value="Tue"> Tue</label>
+      <label><input type="checkbox" value="Wed"> Wed</label>
+      <label><input type="checkbox" value="Thu"> Thu</label>
+      <label><input type="checkbox" value="Fri"> Fri</label>
+    </div>
+    <label class="search-time">الوقت:
+      <select id="searchTime"><option value="">كل الأوقات</option></select>
+    </label>
+    <button class="secondary" onclick="searchPages()">بحث</button>
+    <button onclick="showAllPages()">عرض الكل</button>
+  </div>
+  <div id="searchResults" class="search-results">استخدم تحديد الأيام أو الوقت للبحث في الصفحات المحفوظة.</div>
+</section>
+<main class="sheet">
+  <div id="pageStatus" class="page-status">صفحة جديدة</div>
+  <div class="topline">
+    <label>TIME: <select id="time" aria-label="Training time"></select></label>
+  </div>
+  <div class="days-wrap" id="days">
+    <strong>DAY:</strong>
+    <label><input type="checkbox" value="Sat"> Sat</label>
+    <label><input type="checkbox" value="Sun"> Sun</label>
+    <label><input type="checkbox" value="Mon"> Mon</label>
+    <label><input type="checkbox" value="Tue"> Tue</label>
+    <label><input type="checkbox" value="Wed"> Wed</label>
+    <label><input type="checkbox" value="Thu"> Thu</label>
+    <label><input type="checkbox" value="Fri"> Fri</label>
+  </div>
+  <div class="grid" id="groups"></div>
+</main>
+<script>
+const KEY = 'crocodile_swim_class_sheet_v1';
+const PAGES_KEY = 'crocodile_swim_saved_pages_v1';
+const DRAFT_KEY = 'crocodile_swim_current_draft_v1';
+const container = document.getElementById('groups');
+const timeSelect = document.getElementById('time');
+const searchTime = document.getElementById('searchTime');
+
+function timeLabel(hour, minute) {
+  const suffix = hour < 12 ? 'AM' : 'PM';
+  const h = hour % 12 || 12;
+  return `${h}:${String(minute).padStart(2,'0')} ${suffix}`;
+}
+for (let h=0; h<24; h++) for (let m of [0,30]) {
+  const label = timeLabel(h,m);
+  [timeSelect, searchTime].forEach((select, index) => {
+    const option = document.createElement('option');
+    option.value = label;
+    option.textContent = label;
+    select.appendChild(option);
+  });
+}
+for (let g=0; g<10; g++) {
+  const section = document.createElement('section');
+  section.className = 'group';
+  section.innerHTML = `
+    <div class="coachline">COACH <input type="text" data-field="coach" aria-label="Coach name" placeholder="Coach name"></div>
+    <table>
+      <thead><tr><th>N</th><th>CODE</th><th>NAME</th><th>AGE</th><th>END</th><th>STAGE</th><th>NOTE</th></tr></thead>
+      <tbody>${Array.from({length:5},(_,i)=>`
+        <tr>
+          <td class="num">${i+1}</td>
+          <td><input type="text" data-field="code" aria-label="Code"></td>
+          <td class="name"><input type="text" data-field="name" aria-label="Swimmer name"></td>
+          <td><input type="text" data-field="age" aria-label="Age"></td>
+          <td><input type="text" data-field="end" aria-label="End"></td>
+          <td><input type="text" data-field="stage" aria-label="Stage"></td>
+          <td><input type="text" data-field="note" aria-label="Note"></td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+  section.dataset.group = g;
+  container.appendChild(section);
+}
+function getPages() {
+  try { return JSON.parse(localStorage.getItem(PAGES_KEY) || '[]'); } catch(e) { return []; }
+}
+function putPages(pages) { localStorage.setItem(PAGES_KEY, JSON.stringify(pages)); }
+function collect() {
+  return {
+    days: [...document.querySelectorAll('#days input:checked')].map(x => x.value),
+    time: timeSelect.value,
+    groups: [...document.querySelectorAll('.group')].map(group => ({
+      coach: group.querySelector('[data-field="coach"]').value,
+      swimmers: [...group.querySelectorAll('tbody tr')].map(row => ({
+        code: row.querySelector('[data-field="code"]').value,
+        name: row.querySelector('[data-field="name"]').value,
+        age: row.querySelector('[data-field="age"]').value,
+        end: row.querySelector('[data-field="end"]').value,
+        stage: row.querySelector('[data-field="stage"]').value,
+        note: row.querySelector('[data-field="note"]').value
+      }))
+    }))
+  };
+}
+function hasContent(data) {
+  return (data.days && data.days.length) ||
+    data.groups.some(g => g.coach || g.swimmers.some(sw => Object.values(sw).some(v => String(v || '').trim())));
+}
+function saveDraft() {
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(collect())); } catch(e) {}
+}
+function renderData(data) {
+  document.querySelectorAll('#days input').forEach(box => box.checked = (data.days || []).includes(box.value));
+  timeSelect.value = data.time || timeSelect.options[0].value;
+  (data.groups || []).forEach((g,i) => {
+    const section = document.querySelectorAll('.group')[i];
+    if (!section) return;
+    section.querySelector('[data-field="coach"]').value = g.coach || '';
+    (g.swimmers || []).forEach((sw,j) => {
+      const row = section.querySelectorAll('tbody tr')[j];
+      if (!row) return;
+      Object.keys(sw).forEach(k => {
+        const field = row.querySelector(`[data-field="${k}"]`);
+        if (field) field.value = sw[k] || '';
+      });
+    });
+  });
+}
+function emptyData() {
+  return {days:[], time:timeSelect.options[0].value, groups:Array.from({length:10},()=>({coach:'',swimmers:Array.from({length:5},()=>({code:'',name:'',age:'',end:'',stage:'',note:''}))}))};
+}
+function newPage() {
+  renderData(emptyData());
+  document.getElementById('pageStatus').textContent = 'صفحة جديدة — أدخل بيانات المجموعة التالية';
+  saveDraft();
+}
+function saveNow() {
+  const data = collect();
+  if (!hasContent(data)) {
+    alert('أدخل اليوم والوقت أو بيانات السباحين قبل الحفظ.');
+    return;
+  }
+  try {
+    const pages = getPages();
+    const id = Date.now().toString();
+    pages.unshift({id, savedAt:new Date().toLocaleString('ar-EG'), ...data});
+    putPages(pages);
+    localStorage.removeItem(DRAFT_KEY);
+    newPage();
+    document.getElementById('pageStatus').textContent = 'تم حفظ الصفحة السابقة — صفحة جديدة جاهزة';
+    alert('تم حفظ الصفحة وإنشاء صفحة جديدة تلقائياً.');
+  } catch(e) {
+    alert('تعذر حفظ الصفحة. تأكد من توفر مساحة تخزين في المتصفح.');
+  }
+}
+function exportBackup() {
+  try {
+    // تضمين الصفحة الحالية غير المحفوظة وكل الصفحات المحفوظة
+    saveDraft();
+    const backup = {
+      app: 'Crocodile Swimming Classes',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      pages: getPages(),
+      currentDraft: collect()
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `Crocodile_Swimming_Backup_${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    alert('تم تجهيز النسخة الاحتياطية. اختر حفظ الملف في تطبيق «الملفات» أو أي مكان خارج المتصفح.');
+  } catch(e) {
+    alert('تعذر تصدير النسخة الاحتياطية من هذا المتصفح.');
+  }
+}
+function importBackup(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const backup = JSON.parse(reader.result);
+      if (!backup || !Array.isArray(backup.pages) || !backup.currentDraft || !Array.isArray(backup.currentDraft.groups)) {
+        throw new Error('Invalid backup');
+      }
+      if (!confirm('استيراد النسخة الاحتياطية سيستبدل الصفحات المحفوظة والصفحة الحالية على هذا الجهاز. هل تريد المتابعة؟')) return;
+      putPages(backup.pages);
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(backup.currentDraft));
+      renderData(backup.currentDraft);
+      document.getElementById('pageStatus').textContent = 'تم استيراد نسخة احتياطية';
+      alert('تم استيراد النسخة الاحتياطية بنجاح.');
+    } catch(e) {
+      alert('ملف النسخة الاحتياطية غير صالح أو لا يخص هذا النظام.');
+    } finally {
+      event.target.value = '';
+    }
+  };
+  reader.onerror = () => {
+    alert('تعذرت قراءة الملف.');
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+function loadDraft() {
+  try {
+    const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+    if (draft) renderData(draft);
+    else {
+      // ترحيل البيانات القديمة مرة واحدة إذا وجدت
+      const old = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (old) { renderData(old); saveDraft(); }
+    }
+  } catch(e) {}
+}
+function searchPages() {
+  const selectedDays = [...document.querySelectorAll('.search-days input:checked')].map(x => x.value);
+  const selectedTime = searchTime.value;
+  const matches = getPages().filter(page =>
+    selectedDays.every(day => (page.days || []).includes(day)) &&
+    (!selectedTime || page.time === selectedTime)
+  );
+  renderResults(matches);
+}
+function showAllPages() { renderResults(getPages()); }
+function renderResults(pages) {
+  const target = document.getElementById('searchResults');
+  if (!pages.length) { target.textContent = 'لا توجد صفحات محفوظة تطابق البحث.'; return; }
+  target.innerHTML = pages.map(page => {
+    const days = (page.days || []).join('، ') || 'بدون يوم';
+    const time = page.time || 'بدون وقت';
+    const swimmers = (page.groups || []).reduce((n,g)=>n+(g.swimmers||[]).filter(sw=>Object.values(sw).some(v=>String(v||'').trim())).length,0);
+    return `<div class="result-item"><span><b>${days}</b> — ${time}<br><small>${page.savedAt || ''} | عدد السباحين: ${swimmers}</small></span><button type="button" onclick="openPage('${page.id}')">فتح الصفحة</button></div>`;
+  }).join('');
+}
+function openPage(id) {
+  const page = getPages().find(p => p.id === id);
+  if (!page) return;
+  if (hasContent(collect()) && !confirm('فتح الصفحة المختارة؟ سيتم استبدال بيانات الصفحة الحالية غير المحفوظة.')) return;
+  renderData(page);
+  document.getElementById('pageStatus').textContent = `صفحة محفوظة — ${page.savedAt || ''}`;
+  saveDraft();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function scheduleSave() {
+  clearTimeout(window._saveTimer);
+  window._saveTimer = setTimeout(saveDraft, 300);
+}
+document.addEventListener('input', scheduleSave);
+document.addEventListener('change', scheduleSave);
+function clearData() {
+  if (!confirm('هل تريد تفريغ الصفحة الحالية فقط؟ الصفحات المحفوظة لن تتأثر.')) return;
+  newPage();
+}
+loadDraft();
+</script>
+</body>
+</html>
